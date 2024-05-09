@@ -31,6 +31,7 @@ import {
 import {DOCUMENT} from '@angular/common';
 import {Directionality} from '@angular/cdk/bidi';
 import {DOWN_ARROW, ENTER, ESCAPE, TAB, UP_ARROW, hasModifierKey} from '@angular/cdk/keycodes';
+import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 import {_getEventTarget} from '@angular/cdk/platform';
 import {TemplatePortal} from '@angular/cdk/portal';
 import {ViewportRuler} from '@angular/cdk/scrolling';
@@ -239,6 +240,8 @@ export class MatAutocompleteTrigger
     private _viewContainerRef: ViewContainerRef,
     private _zone: NgZone,
     private _changeDetectorRef: ChangeDetectorRef,
+    /** Subscription to viewport orientation changes. */
+    private _breakpointObserver: BreakpointObserver,
     @Inject(MAT_AUTOCOMPLETE_SCROLL_STRATEGY) scrollStrategy: any,
     @Optional() private _dir: Directionality | null,
     @Optional() @Inject(MAT_FORM_FIELD) @Host() private _formField: MatFormField | null,
@@ -880,13 +883,24 @@ export class MatAutocompleteTrigger
   }
 
   private _getOverlayPosition(): PositionStrategy {
+    // Set default Overlay Position
     const strategy = this._overlay
       .position()
       .flexibleConnectedTo(this._getConnectedElement())
-      .withFlexibleDimensions(true)
-      .withGrowAfterOpen(true)
-      .withViewportMargin(8)
+      .withFlexibleDimensions(false)
       .withPush(false);
+
+    // Check breakpoint if being viewed in HandsetLandscape
+    const isHandsetLandscape = this._breakpointObserver
+      .observe(Breakpoints.HandsetLandscape)
+      .subscribe(result => {
+        return result.matches;
+      });
+    // Apply HandsetLandscape settings to prevent overlay cutoff in that breakpoint
+    // Fixes b/284148377
+    if (isHandsetLandscape) {
+      strategy.withFlexibleDimensions(true).withGrowAfterOpen(true).withViewportMargin(8);
+    }
 
     this._setStrategyPositions(strategy);
     this._positionStrategy = strategy;
