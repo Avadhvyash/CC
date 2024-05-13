@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {BACKSPACE, hasModifierKey} from '@angular/cdk/keycodes';
+import {BACKSPACE, ENTER, hasModifierKey} from '@angular/cdk/keycodes';
 import {
   AfterContentInit,
   Directive,
@@ -165,6 +165,10 @@ export class MatChipInput implements MatChipTextControl, AfterContentInit, OnCha
       // And the input is empty (see behaviour in _keyup)
       if (event.keyCode === BACKSPACE && this._focusLastChipOnBackspace) {
         this._chipGrid._focusLastChip();
+        event.preventDefault();
+        return;
+      } else if (event.keyCode === ENTER) {
+        // Prevent adding both the search string and the selected suggestion
         event.preventDefault();
         return;
       } else {
